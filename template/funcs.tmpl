@@ -3,9 +3,9 @@
 // Test role {{.RoleName}}, {{.UserID}}
 {{range $i, $e := .Testcases}}{{with $roleTest := index $ $i}}{{with $result := index $roleTest.Results $i}}
 // {{$e.Desc}}
-func Test{{$e.Name}}By{{$roleTest.RoleName}}(t *test.T) {
-	expectedBody := ` + "`{{$result.Body}}`" + `
-	{{$bodyLength := len $e.Body}}{{if gt $bodyLength 0}}payload := []byte("{{$e.Body}}")
+func Test{{$e.Name}}By{{$roleTest.RoleName}}(t *testing.T) {
+	expectedBody := `{{$result.Body}}`
+	{{$bodyLength := len $e.Body}}{{if gt $bodyLength 0}}payload := []byte(`{{$e.Body}}`)
 	req, _ := http.NewRequest("{{$e.Method}}", "{{$e.Path}}", bytes.NewBuffer(payload)){{else}}req, _ := http.NewRequest("{{$e.Method}}", "{{$e.Path}}", nil){{end}}
 	req.Header.Set("X-Forwarded-User", "{{$roleTest.UserID}};2")
 	response := executeRequest(req)

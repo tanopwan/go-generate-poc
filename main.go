@@ -67,5 +67,12 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	tmpl.Execute(os.Stdout, fileData)
+
+	f, err := os.Create("main_test.go")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	tmpl.Execute(f, fileData)
 }
