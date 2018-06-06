@@ -34,38 +34,6 @@ type roleTest struct {
 	Results   []testResult
 }
 
-var page = `
-import (
-	"bytes"
-	"net/http"
-	"testing"
-)
-
-// {{.Name}}
-{{template "funcs" .Tests}}
-`
-
-var funcs = `
-{{define "funcs"}}
-{{range .}}
-// Test role {{.RoleName}}, {{.UserID}}
-{{range $i, $e := .Testcases}}{{with $roleTest := index $ $i}}{{with $result := index $roleTest.Results $i}}
-// {{$e.Desc}}
-func Test{{$e.Name}}By{{$roleTest.RoleName}}(t *test.T) {
-	expectedBody := ` + "`{{$result.Body}}`" + `
-	{{$bodyLength := len $e.Body}}{{if gt $bodyLength 0}}payload := []byte("{{$e.Body}}")
-	req, _ := http.NewRequest("{{$e.Method}}", "{{$e.Path}}", bytes.NewBuffer(payload)){{else}}req, _ := http.NewRequest("{{$e.Method}}", "{{$e.Path}}", nil){{end}}
-	req.Header.Set("X-Forwarded-User", "{{$roleTest.UserID}};2")
-	response := executeRequest(req)
-
-	checkResponseCode(t, {{$result.Status}}, response.Code)
-	checkResponseBody(t, expectedBody, response)
-}
-{{end}}{{end}}{{end}}
-{{end}}
-{{end}}
-`
-
 func main() {
 	var projectTests = []testcase{
 		{"GetMyProjectsOK", "GET", "get my projects by user_id success", "/projects/", ``},
@@ -95,12 +63,8 @@ func main() {
 
 	fileData := &file{Name: "Project", Tests: roleTestData}
 
-	tmpl := template.New("page")
-	var err error
-	if tmpl, err = tmpl.Parse(page); err != nil {
-		fmt.Println(err)
-	}
-	if tmpl, err = tmpl.Parse(funcs); err != nil {
+	tmpl, err := template.ParseFiles("./template/file.tmpl", "./template/funcs.tmpl")
+	if err != nil {
 		fmt.Println(err)
 	}
 	tmpl.Execute(os.Stdout, fileData)

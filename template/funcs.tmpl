@@ -1,11 +1,18 @@
 {{define "funcs"}}
-func {{.Name}}(t *testing.T) {
-	expectedBody := "{\"code\":\"fail\",\"message\":\"param illigal\"}"
-	req, _ := http.NewRequest("{{.Action}}", "/api/projects//users", nil)
-	req.Header.Set("X-Forwarded-User", "test_procurement;2")
+{{range .}}
+// Test role {{.RoleName}}, {{.UserID}}
+{{range $i, $e := .Testcases}}{{with $roleTest := index $ $i}}{{with $result := index $roleTest.Results $i}}
+// {{$e.Desc}}
+func Test{{$e.Name}}By{{$roleTest.RoleName}}(t *test.T) {
+	expectedBody := ` + "`{{$result.Body}}`" + `
+	{{$bodyLength := len $e.Body}}{{if gt $bodyLength 0}}payload := []byte("{{$e.Body}}")
+	req, _ := http.NewRequest("{{$e.Method}}", "{{$e.Path}}", bytes.NewBuffer(payload)){{else}}req, _ := http.NewRequest("{{$e.Method}}", "{{$e.Path}}", nil){{end}}
+	req.Header.Set("X-Forwarded-User", "{{$roleTest.UserID}};2")
 	response := executeRequest(req)
 
-	checkResponseCode(t, http.StatusBadRequest, response.Code)
+	checkResponseCode(t, {{$result.Status}}, response.Code)
 	checkResponseBody(t, expectedBody, response)
 }
+{{end}}{{end}}{{end}}
+{{end}}
 {{end}}
